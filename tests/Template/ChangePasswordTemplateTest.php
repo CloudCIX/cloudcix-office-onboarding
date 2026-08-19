@@ -18,41 +18,12 @@ namespace {
 		function style(string $app, string $file): void {
 		}
 	}
-
-	if (!function_exists('image_path')) {
-		function image_path(string $app, string $file): string {
-			return "/asset/$app/$file";
-		}
-	}
 }
 
 namespace OCA\CloudCIXOnboarding\Tests\Template {
 	use PHPUnit\Framework\TestCase;
 
 	final class ChangePasswordTemplateTest extends TestCase {
-		public function testRendersAccessibleCloudCixLogo(): void {
-			$_ = [
-				'error' => null,
-				'submitUrl' => '/apps/cloudcix_onboarding/password',
-				'logoutUrl' => '/logout',
-				'requesttoken' => 'csrf-token',
-			];
-			$l = new class {
-				public function t(string $text): string {
-					return $text;
-				}
-			};
-
-			ob_start();
-			require dirname(__DIR__, 2) . '/templates/change-password.php';
-			$output = (string)ob_get_clean();
-
-			self::assertStringContainsString(
-				'<img class="cloudcix-onboarding__logo" src="/asset/cloudcix_onboarding/cloudcix-logo.png" alt="CloudCIX">',
-				$output,
-			);
-		}
-
 		public function testLogoutLinkIncludesEncodedCsrfToken(): void {
 			$_ = [
 				'error' => null,

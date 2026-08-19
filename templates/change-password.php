@@ -14,10 +14,6 @@ style('cloudcix_onboarding', 'change-password');
 
 <main class="cloudcix-onboarding">
 	<section class="cloudcix-onboarding__card" aria-labelledby="cloudcix-onboarding-title">
-		<div class="cloudcix-onboarding__brand">
-			<img class="cloudcix-onboarding__logo" src="<?php p(image_path('cloudcix_onboarding', 'cloudcix-logo.png')); ?>" alt="CloudCIX">
-		</div>
-
 		<h1 id="cloudcix-onboarding-title"><?php p($l->t('Change your password')); ?></h1>
 		<p><?php p($l->t('For security, you must choose a new password before continuing to CloudCIX Office.')); ?></p>
 
