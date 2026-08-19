@@ -42,7 +42,9 @@ php occ user:setting <uid> cloudcix_onboarding must_change_password 1
 - `PasswordChangeMiddleware` globally with `registerMiddleware(..., true)`;
 - `PasswordUpdatedListener` for `OCP\User\Events\PasswordUpdatedEvent`;
 - `DirectLoginGuardListener` for `OCP\User\Events\BeforeUserLoggedInEvent`;
-- `DavGuardPlugin` on Nextcloud 34's Sabre plugin-add event.
+- `DavSessionGuard` from `boot()` before Nextcloud starts a DAV service.
+
+The app declares the `authentication` type so Nextcloud loads and boots it before resolving any `remote.php` service.
 
 Global AppFramework middleware has been public since Nextcloud 26 and is documented for intercepting controllers belonging to other apps.
 
@@ -67,7 +69,7 @@ Global AppFramework middleware does not cover raw endpoints such as WebDAV. `Dir
 
 This lets the browser establish the initial session, after which middleware forces the password page, while rejecting use of the bootstrap password directly against DAV or similar password-authenticated endpoints.
 
-Nextcloud's DAV authenticator also accepts an established browser session cookie without emitting another login event. `DavGuardPlugin` runs after DAV authentication and rejects every request whose authenticated user is still flagged. This covers browser cookies, direct credentials, and DAV read or mutating methods without adding path or method exceptions.
+Nextcloud's DAV authenticators also accept an established browser session cookie without emitting another login event. `DavSessionGuard` therefore runs during authentication-app boot, before the selected DAV server starts, and sets DAV's session-auth marker to an impossible empty UID for every Nextcloud 34 DAV service alias: `/dav`, `/webdav`, `/files`, `/caldav`, `/calendar`, `/carddav`, and `/contacts`. All v1 and v2 DAV authenticators then reject the cookie without destroying the browser session. Direct credentials remain covered by the login-event listener because they authenticate later inside Sabre.
 
 The appliance must mark the account before distributing credentials and before provisioning any app password or client token. No app password exists in the specified first-boot flow. Revoking arbitrary pre-existing tokens is outside this app's scope.
 
@@ -107,9 +109,9 @@ Nextcloud 34 exposes no public method for retrieving the current login alias or 
 
 This app avoids the internal login-name method by validating the provisioned local account's UID through public `IUserManager::checkPassword()`. It uses `OC\User\Session::updateSessionTokenPassword()` as a documented compatibility boundary so the successful request can remain logged in and redirect to Files as required.
 
-The public `OCP\SabrePluginEvent` is dispatched by the main Nextcloud 34 DAV server under the legacy `OCA\DAV\Connector\Sabre::addPlugin` event name. Registering the DAV guard on that name is a second fixed-version compatibility boundary.
+The DAV guard also relies on Nextcloud 34's internal `AUTHENTICATED_TO_DAV_BACKEND` session key. It sets the key to an impossible empty UID while flagged and removes it after the flag clears, leaving any genuine DAV-authenticated UID untouched.
 
-Both compatibility boundaries must be reviewed before raising the app's declared maximum Nextcloud version. The public-only alternative to the session method is to log the user out after success.
+If either internal boundary or Nextcloud's DAV service aliases change in a future release, compatibility must be reviewed before raising the app's declared maximum Nextcloud version. The public-only alternative to the session method is to log the user out after success.
 
 ### Flag clearing
 
@@ -128,7 +130,7 @@ Because event delivery is synchronous, the flag is removed before the controller
 - Redirect targets are generated server-side and accept no user-controlled destination.
 - Middleware allows no general API or application route for a flagged user.
 - The direct-login guard blocks the bootstrap password on raw password-authenticated endpoints.
-- The DAV guard blocks flagged browser-cookie sessions and every DAV method after authentication.
+- The DAV guard blocks flagged browser-cookie sessions before every Nextcloud 34 DAV service.
 - Static-resource exemptions are GET/HEAD-only and limited to resource paths, so they cannot mutate account data.
 - Logout remains available.
 - The app does not assume that every administrator or every first-login user is flagged.
@@ -141,7 +143,7 @@ Focused PHPUnit tests run inside a Nextcloud 34 server test environment.
 
 Middleware tests cover anonymous access, unflagged access, redirecting a flagged user, allowing the password controller, allowing logout/resources, and exception-to-redirect handling without loops.
 
-Direct-login guard tests cover unflagged authentication, allowed browser login, rejected flagged direct authentication, unique email aliases, and ambiguous email addresses. DAV plugin tests cover registration order plus anonymous, unflagged, and flagged sessions.
+Direct-login guard tests cover unflagged authentication, allowed browser login, rejected flagged direct authentication, unique email aliases, and ambiguous email addresses. DAV session-guard tests cover every Nextcloud 34 DAV alias plus anonymous, unflagged, unrelated-service, and non-remote requests.
 
 Controller tests cover unauthenticated and unflagged requests, wrong current password, mismatch, empty and same passwords, policy errors, backend failure, successful password update, session-token update, and Files redirect. Test doubles additionally assert that submitted passwords are never passed to the logger.
 
@@ -206,7 +208,7 @@ The existing `set -euo pipefail` makes either failure abort provisioning. Re-run
 9. Attempt login with the old password; expect rejection.
 10. Log in with the new password; expect normal access without onboarding.
 11. Before completing onboarding, attempt WebDAV authentication with the bootstrap password; expect rejection.
-12. Before completing onboarding, retry DAV with the authenticated browser session cookie for both a read and a mutating method; expect rejection.
+12. Before completing onboarding, retry GET and DELETE with the authenticated browser session cookie across `/dav`, `/webdav`, `/files`, `/caldav`, `/calendar`, `/carddav`, and `/contacts`; expect rejection for every request.
 
 ## Deliberate scope limits
 

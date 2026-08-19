@@ -13,6 +13,9 @@
 	<licence>agpl</licence>
 	<author>CloudCIX</author>
 	<namespace>CloudCIXOnboarding</namespace>
+	<types>
+		<authentication/>
+	</types>
 	<category>security</category>
 	<dependencies>
 		<nextcloud min-version="34" max-version="34"/>

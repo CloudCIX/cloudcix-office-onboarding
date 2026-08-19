@@ -4,7 +4,7 @@
 
 **Goal:** Build a Nextcloud 34 app that forces only the explicitly marked CloudCIX bootstrap administrator to change its password before using Nextcloud.
 
-**Architecture:** A globally registered AppFramework middleware redirects flagged browser sessions, a login event listener rejects the bootstrap password on raw direct-auth endpoints, a Sabre plugin rejects flagged DAV sessions after authentication, a server-rendered controller changes the password through `IUser`, and `PasswordUpdatedEvent` clears the flag. All state uses typed per-user configuration; one documented `OC\User\Session` call preserves the active browser token because Nextcloud 34 has no public equivalent.
+**Architecture:** A globally registered AppFramework middleware redirects flagged browser sessions, a login event listener rejects the bootstrap password on raw direct-auth endpoints, a pre-server guard rejects flagged browser-cookie sessions across every Nextcloud 34 DAV alias, a server-rendered controller changes the password through `IUser`, and `PasswordUpdatedEvent` clears the flag. All state uses typed per-user configuration; one documented `OC\User\Session` call preserves the active browser token because Nextcloud 34 has no public equivalent.
 
 **Tech Stack:** PHP 8.2+, Nextcloud 34 AppFramework/OCP APIs, PHPUnit in a Nextcloud server checkout, server-rendered PHP/CSS.
 
