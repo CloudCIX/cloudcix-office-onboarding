@@ -36,6 +36,6 @@ style('cloudcix_onboarding', 'change-password');
 			<button type="submit" class="primary"><?php p($l->t('Change password')); ?></button>
 		</form>
 
-		<a class="cloudcix-onboarding__logout" href="<?php p($_['logoutUrl']); ?>"><?php p($l->t('Log out')); ?></a>
+		<a class="cloudcix-onboarding__logout" href="<?php p($_['logoutUrl'] . '?requesttoken=' . urlencode($_['requesttoken'])); ?>"><?php p($l->t('Log out')); ?></a>
 	</section>
 </main>
