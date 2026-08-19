@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!--
+  - SPDX-FileCopyrightText: 2026 CloudCIX
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+	<id>cloudcix_onboarding</id>
+	<name>CloudCIX Onboarding</name>
+	<summary>Require the provisioned administrator to replace its initial password</summary>
+	<description>Forces an explicitly marked CloudCIX Office user to change its bootstrap password.</description>
+	<version>1.0.0</version>
+	<licence>agpl</licence>
+	<author>CloudCIX</author>
+	<namespace>CloudCIXOnboarding</namespace>
+	<category>security</category>
+	<dependencies>
+		<nextcloud min-version="34" max-version="34"/>
+	</dependencies>
+</info>

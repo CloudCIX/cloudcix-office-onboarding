@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  - SPDX-FileCopyrightText: 2026 CloudCIX
+  - SPDX-License-Identifier: CC0-1.0
+-->
+<phpunit bootstrap="./bootstrap.php"
+         cacheDirectory=".phpunit.cache"
+         colors="true"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<testsuite name="CloudCIX Onboarding Tests">
+		<directory suffix="Test.php">.</directory>
+	</testsuite>
+	<source>
+		<include>
+			<directory suffix=".php">../lib</directory>
+		</include>
+	</source>
+</phpunit>
