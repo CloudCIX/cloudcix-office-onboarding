@@ -24,9 +24,36 @@ final class DirectLoginGuardListenerTest extends TestCase {
 	public function testAllowsUnknownUser(): void {
 		[$listener, $users, $config] = $this->listener('/remote.php/dav/files/missing');
 		$users->method('get')->with('missing')->willReturn(null);
+		$users->expects(self::never())->method('getByEmail');
 		$config->expects(self::never())->method('getValueString');
 
 		$listener->handle(new BeforeUserLoggedInEvent('missing', 'secret'));
+	}
+
+	public function testRejectsFlaggedDirectAuthenticationByUniqueEmail(): void {
+		[$listener, $users, $config] = $this->listener('/remote.php/dav/files/admin');
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('admin');
+		$users->method('get')->with('admin@example.com')->willReturn(null);
+		$users->method('getByEmail')->with('admin@example.com')->willReturn([$user]);
+		$config->method('getValueString')
+			->with('admin', Application::APP_ID, Application::FLAG_KEY, '0')
+			->willReturn('1');
+
+		$this->expectException(HintException::class);
+		$listener->handle(new BeforeUserLoggedInEvent('admin@example.com', 'secret'));
+	}
+
+	public function testAllowsAmbiguousEmailThatNextcloudWillReject(): void {
+		[$listener, $users, $config] = $this->listener('/remote.php/dav/files/admin');
+		$users->method('get')->with('shared@example.com')->willReturn(null);
+		$users->method('getByEmail')->with('shared@example.com')->willReturn([
+			$this->createMock(IUser::class),
+			$this->createMock(IUser::class),
+		]);
+		$config->expects(self::never())->method('getValueString');
+
+		$listener->handle(new BeforeUserLoggedInEvent('shared@example.com', 'secret'));
 	}
 
 	public function testAllowsUnflaggedUser(): void {

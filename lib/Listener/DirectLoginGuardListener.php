@@ -35,7 +35,12 @@ final class DirectLoginGuardListener implements IEventListener {
 			return;
 		}
 
-		$user = $this->users->get($event->getUsername());
+		$loginName = $event->getUsername();
+		$user = $this->users->get($loginName);
+		if ($user === null && filter_var($loginName, FILTER_VALIDATE_EMAIL) !== false) {
+			$matches = $this->users->getByEmail($loginName);
+			$user = count($matches) === 1 ? $matches[0] : null;
+		}
 		if ($user !== null && $this->config->getValueString($user->getUID(), Application::APP_ID, Application::FLAG_KEY, '0') === '1') {
 			throw new HintException(
 				'Password change required',

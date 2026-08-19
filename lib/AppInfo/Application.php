@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace OCA\CloudCIXOnboarding\AppInfo;
 
+use OCA\CloudCIXOnboarding\Dav\DavGuardPlugin;
 use OCA\CloudCIXOnboarding\Listener\DirectLoginGuardListener;
 use OCA\CloudCIXOnboarding\Listener\PasswordUpdatedListener;
 use OCA\CloudCIXOnboarding\Middleware\PasswordChangeMiddleware;
@@ -30,6 +31,7 @@ final class Application extends App implements IBootstrap {
 	#[\Override]
 	public function register(IRegistrationContext $context): void {
 		$context->registerMiddleware(PasswordChangeMiddleware::class, true);
+		$context->registerEventListener('OCA\DAV\Connector\Sabre::addPlugin', DavGuardPlugin::class);
 		$context->registerEventListener(BeforeUserLoggedInEvent::class, DirectLoginGuardListener::class);
 		$context->registerEventListener(PasswordUpdatedEvent::class, PasswordUpdatedListener::class);
 	}

@@ -99,7 +99,7 @@ The app registers global Nextcloud AppFramework middleware. For authenticated us
 
 All other AppFramework controllers redirect to the password page. Static CSS, JavaScript, and images normally bypass PHP and are served directly by Apache.
 
-AppFramework middleware does not wrap raw WebDAV endpoints. A `BeforeUserLoggedInEvent` listener therefore rejects the marked user's bootstrap password when it is used for direct authentication outside the normal `/login` route. The newly provisioned account must be marked before credentials are distributed and before any app password or client token is created.
+AppFramework middleware does not wrap raw WebDAV endpoints. A `BeforeUserLoggedInEvent` listener rejects direct authentication for the flagged UID or its unique email login alias outside the normal `/login` route. A SabreDAV plugin then rejects every authenticated DAV request while that user remains flagged, including requests carrying the browser session cookie created by `/login`. The newly provisioned account must be marked before credentials are distributed and before any app password or client token is created.
 
 Missing or unexpected flag values do not affect a user. This prevents unrelated users from being trapped.
 
@@ -120,6 +120,8 @@ The POST route keeps Nextcloud's default CSRF protection. It:
 `IUser::setPassword()` invokes Nextcloud's configured password policy. The app never hashes, logs, or persists a submitted password.
 
 Nextcloud 34 has no public method to update the encrypted password stored with the active browser session token. Nextcloud's own Settings password controller uses `OC\User\Session::updateSessionTokenPassword()`. This app uses that one internal method so the successful request can remain logged in and redirect to Files. Compatibility must be reviewed before increasing the declared maximum Nextcloud version.
+
+Nextcloud 34 exposes the public `OCP\SabrePluginEvent`, but its main DAV server dispatches the plugin-add hook under the legacy `OCA\DAV\Connector\Sabre::addPlugin` event name. The app registers its guard on that fixed-version compatibility boundary. Review it alongside the session method before increasing the maximum Nextcloud version.
 
 ## Flag clearing
 
@@ -196,7 +198,7 @@ EXPECTED:
 Normal Nextcloud login; onboarding page does not appear.
 ```
 
-Before step 7, also attempt WebDAV authentication with the bootstrap password. It must be rejected.
+Before step 7, attempt WebDAV authentication with the bootstrap password. Then log in through `/login` without completing onboarding and retry DAV with that browser session cookie. Both read and mutating DAV requests must be rejected.
 
 ## License
 

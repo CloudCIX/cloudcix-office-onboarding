@@ -52,6 +52,26 @@ final class PasswordControllerTest extends TestCase {
 		self::assertSame('/index.php/apps/files', $response->getRedirectURL());
 	}
 
+	public function testRedirectsAnonymousUserToFiles(): void {
+		[$controller] = $this->controller('0', false);
+
+		$response = $controller->show();
+
+		self::assertInstanceOf(RedirectResponse::class, $response);
+		self::assertSame('/index.php/apps/files', $response->getRedirectURL());
+	}
+
+	public function testRedirectsAnonymousPasswordUpdateToFiles(): void {
+		[$controller, $user, $users] = $this->controller('0', false);
+		$users->expects(self::never())->method('checkPassword');
+		$user->expects(self::never())->method('setPassword');
+
+		$response = $controller->update('current-secret', 'new-secret', 'new-secret');
+
+		self::assertInstanceOf(RedirectResponse::class, $response);
+		self::assertSame('/index.php/apps/files', $response->getRedirectURL());
+	}
+
 	public function testRejectsEmptyNewPassword(): void {
 		[$controller, $user, $users] = $this->controller('1');
 		$users->expects(self::never())->method('checkPassword');
@@ -125,6 +145,17 @@ final class PasswordControllerTest extends TestCase {
 		self::assertSame('/index.php/apps/files', $response->getRedirectURL());
 	}
 
+	public function testReturnsGenericFailureWhenBackendRejectsPassword(): void {
+		[$controller, $user, $users, $tokenSession] = $this->controller('1');
+		$users->method('checkPassword')->willReturn($user);
+		$user->method('setPassword')->willReturn(false);
+		$tokenSession->expects(self::never())->method('updateSessionTokenPassword');
+
+		$response = $controller->update('current-secret', 'new-secret', 'new-secret');
+
+		self::assertSame('Unable to change password.', $response->getParams()['error']);
+	}
+
 	public function testUnexpectedFailureLogsNoPassword(): void {
 		[$controller, $user, $users, $tokenSession, $logger] = $this->controller('1');
 		$users->method('checkPassword')->willReturn($user);
@@ -151,12 +182,12 @@ final class PasswordControllerTest extends TestCase {
 	 *   LoggerInterface&MockObject
 	 * }
 	 */
-	private function controller(string $flag): array {
+	private function controller(string $flag, bool $authenticated = true): array {
 		$request = $this->createMock(IRequest::class);
 		$session = $this->createMock(IUserSession::class);
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('admin');
-		$session->method('getUser')->willReturn($user);
+		$session->method('getUser')->willReturn($authenticated ? $user : null);
 		$users = $this->createMock(IUserManager::class);
 		$config = $this->createMock(IUserConfig::class);
 		$config->method('getValueString')
