@@ -74,6 +74,21 @@ final class DavSessionGuardTest extends TestCase {
 		$guard->enforce();
 	}
 
+	public function testSkipsCronWithoutReadingAnHttpPath(): void {
+		$request = $this->createMock(IRequest::class);
+		$request->method('getScriptName')->willReturn('/cron.php');
+		$request->expects(self::never())->method('getPathInfo');
+
+		$guard = new DavSessionGuard(
+			$request,
+			$this->createMock(IUserSession::class),
+			$this->createMock(IUserConfig::class),
+			$this->createMock(ISession::class),
+		);
+
+		$guard->enforce();
+	}
+
 	/** @return array{DavSessionGuard, ISession&\PHPUnit\Framework\MockObject\MockObject} */
 	private function guard(string $script, string $path, ?string $uid, string $flag, ?string $davAuthenticated = null): array {
 		$request = $this->createMock(IRequest::class);

@@ -28,8 +28,12 @@ final class DavSessionGuard {
 	}
 
 	public function enforce(): void {
+		if (!str_ends_with($this->request->getScriptName(), '/remote.php')) {
+			return;
+		}
+
 		$path = $this->request->getPathInfo();
-		if (!str_ends_with($this->request->getScriptName(), '/remote.php') || !is_string($path)) {
+		if (!is_string($path)) {
 			return;
 		}
 
