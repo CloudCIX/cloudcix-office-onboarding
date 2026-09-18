@@ -25,3 +25,4 @@
 /vendors/*
 
 /docs/superpowers/
+.DS_Store
